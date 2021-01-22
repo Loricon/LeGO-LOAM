@@ -67,6 +67,17 @@ extern const float ang_res_y = 2.0;
 extern const float ang_bottom = 15.0+0.1;
 extern const int groundScanInd = 7;
 
+
+// VLP_32C
+// extern const int N_SCAN = 32;
+// extern const int Horizon_SCAN = 1800;
+// extern const float ang_res_x = 360.0/float(Horizon_SCAN);
+// extern const float ang_bottom = 30.67;
+// extern const int groundScanInd = 20;
+//extern constfloat 32C_ang_res_y=[-25.0000，-15.6390，-11.3100，-8.8430，-7.2540，-6.1480，-5.3330，-4.6670，-4.0000，-3.6670，-3.3330，-3.0000，-2.6670，-2.3330，-2.0000，-1.6670，-1.3330，-1.0000，-0.6670，-0.3330，0，0.3330 ，0.6670，1.0000，1.3330，1.6670，2.3330，3.3330，4.6670，7.0000，10.3330，15.0000];
+
+
+
 // HDL-32E
 // extern const int N_SCAN = 32;
 // extern const int Horizon_SCAN = 1800;
