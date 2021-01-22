@@ -210,6 +210,9 @@ public:
 
     void projectPointCloud(){
         // range image projection
+        /* 这里的代码仅适用于垂直分辨率线性分布的激光雷达，对于非线性雷达，需要根据具体雷达的非线性分布对这段代码进行修改，
+           修改思路为使非线性雷达按照同样的空间分布逻辑，即点云中的某一点是如何分布的，目前暂时只能用查表的方式
+        */
         float verticalAngle, horizonAngle, range;
         size_t rowIdn, columnIdn, index, cloudSize; 
         PointType thisPoint;
@@ -227,21 +230,64 @@ public:
             }
             else{
                 verticalAngle = atan2(thisPoint.z, sqrt(thisPoint.x * thisPoint.x + thisPoint.y * thisPoint.y)) * 180 / M_PI;
+                // 当前点与x轴y轴平面的夹角
                 rowIdn = (verticalAngle + ang_bottom) / ang_res_y;
+                // 从下往上计数，雷达的第几线（ang_res_y 线性雷达角分辨率（垂直），ang_bottom雷达角度范围的下限）
+                /*
+                思路：数组已经经过排序，使用二分法寻找数组中与ang_row最接近的值的下标（第几线rowIdn），由于激光雷达特性，不存在两个数值同时接近
+                修改点：对于非线性分辨率激光雷达，理论上仅需要对rowIdn进行修改，线性方式为直接公式计算，非线性
+                直接根据垂直点的角度来判断属于第几线(查表VLP32C_data)
+                float ang_row = (verticalAngle + ang_bottom);
+                int st=0;
+                int ed=31;
+                
+                if ang_row > 32C_ang_res_y[0]
+                    rowIdn=32;
+                if ang_row < 32C_ang_res_y[31]
+                    rowIdn=1;
+                    //二分法
+                    while(ed- st> 1)     
+                    {
+                        int mid = (ed+ st) / 2;
+                        if(ang_row >= VLP32C_data[mid])
+                            st = mid;
+                        else
+                            ed = mid;
+                    }
+                    if abs(VLP32C_data[st]-ang_row) <= abs(VLP32C_data[ed]-ang_row)
+                        rowIdn=st;
+                    else
+                        rowIdn=ed;
+                    end
+                */
+
             }
-            if (rowIdn < 0 || rowIdn >= N_SCAN)
+            if (rowIdn < 0 || rowIdn >= N_SCAN)   //N_SCAN雷达线数
                 continue;
 
-            horizonAngle = atan2(thisPoint.x, thisPoint.y) * 180 / M_PI;
+            /* 
+            这段注释来自网络：
+			雷达坐标系：右->X,前->Y,上->Z
+			雷达内部旋转扫描方向：Z轴俯视下来，顺时针方向（Z轴右手定则反向）
+			然后horizonAngle = atan2(thisPoint.x, thisPoint.y) * 180 / M_PI计算的是与y轴的夹角，方向为z负。
+            */
 
+            horizonAngle = atan2(thisPoint.x, thisPoint.y) * 180 / M_PI;
+            // atan2()计算是与y轴正方向的夹角大小（雷达坐标系） 
             columnIdn = -round((horizonAngle-90.0)/ang_res_x) + Horizon_SCAN/2;
+             // ang_res_x：角分辨率（水平），Horizon_SCAN：水平扫描总数（360°/水平角分辨率）
+             //  columnIdn是horizonAngle的线性变换（水平方向），horizonAngle范围：(-180:180),columnIdn范围：(1/4*Horizon_SCAN:5/4*Horizon_SCAN)(450:2250)
+
             if (columnIdn >= Horizon_SCAN)
                 columnIdn -= Horizon_SCAN;
+
+            //再次进行变换
 
             if (columnIdn < 0 || columnIdn >= Horizon_SCAN)
                 continue;
 
             range = sqrt(thisPoint.x * thisPoint.x + thisPoint.y * thisPoint.y + thisPoint.z * thisPoint.z);
+            //这个点的距离
             if (range < sensorMinimumRange)
                 continue;
             
